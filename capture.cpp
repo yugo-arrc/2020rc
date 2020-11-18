@@ -29,6 +29,7 @@ int main(int argc, char **argv) try {
     double marker_x, marker_y;
     marker_x = 0;
     marker_y = 0;
+
     while(1) {
         rs2::frameset frames = pipe.wait_for_frames();
         rs2::align align_to_color(RS2_STREAM_COLOR);

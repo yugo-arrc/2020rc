@@ -42,6 +42,56 @@ int main(int argc, char **argv) try {
         auto color_map = aligned_frames.get_color_frame();
         rs2::depth_frame dep = aligned_frames.get_depth_frame();
         cv::Mat image (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
+        cv::Mat detect, senser, gray, mono;
+
+
+        //detect markers
+        detect = image;
+        cv::aruco::detectMarkers(detect, dictionary, marker_corners, marker_ids,  parameters);
+        cv::aruco::drawDetectedMarkers(detect, marker_corners, marker_ids);
+
+        if(marker_ids.size() > 0) {
+            for(int i = 0; i < marker_ids.size() ;i++) {
+                marker_x = 0;
+                marker_y = 0;
+                for(int j = 0; j < 4; j++) {
+                    marker_x += marker_corners.at(i).at(j).x;
+                    marker_y += marker_corners.at(i).at(j).y;
+                }
+            marker_x /= 4;
+            marker_y /= 4;
+
+            cv::circle(detect, cv::Point(marker_x, marker_y), 5, cv::Scalar(0, 200, 0), -1, -1);
+            }
+            double depth = dep.get_distance(marker_x, marker_y);
+            cout << "[" << marker_x << ", " << marker_y << ", " << depth << "]" << endl;
+        }else {
+            cout << "can`t detect markers!" << endl;
+        }
+
+
+        //sense objects
+        senser = image;
+        double depth;
+        for(int cell_x = PAUL_L; cell_x <= PAUL_R; cell_x += 2) {
+            for(int cell_y = AREA_H; cell_y <= AREA_L; cell_y += 2) {
+                double depth = dep.get_distance(cell_x, cell_y);
+                if(depth < DEPTH_MAX && depth > DEPTH_MIN) {
+                    cv::circle(senser, cv::Point(cell_x, cell_y), 1, cv::Scalar(255, 255, 255), -1);
+                }
+            }
+        }
+        cv::cvtColor(senser, gray, cv::COLOR_BGR2GRAY);
+        cv::threshold(gray, mono, 254, 255, cv::THRESH_BINARY);
+
+        dilate(mono, senser, cv::Mat(), cv::Point(-1, -1), 1);
+        erode(senser, senser, cv::Mat(), cv::Point(-1, -1), 1);
+        erode(senser, senser, cv::Mat(), cv::Point(-1, -1), 1);
+        dilate(senser, senser, cv::Mat(), cv::Point(-1, -1), 1);
+
+
+        cv::imshow("detect", detect);
+        cv::imshow("senser", senser);
 
         if(cv::waitKey(1) == 'q') {
             cout << "finish!!" << endl;

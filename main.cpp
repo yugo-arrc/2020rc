@@ -41,12 +41,12 @@ int main(int argc, char **argv) try {
         auto depth_map = aligned_frames.get_depth_frame();
         auto color_map = aligned_frames.get_color_frame();
         rs2::depth_frame dep = aligned_frames.get_depth_frame();
-        cv::Mat image (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
-        cv::Mat detect, senser, gray, mono;
+        cv::Mat detect (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)co$
+        cv::Mat image (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)col$
+        cv::Mat sense, gray, mono;
 
 
         //detect markers
-        detect = image;
         cv::aruco::detectMarkers(detect, dictionary, marker_corners, marker_ids,  parameters);
         cv::aruco::drawDetectedMarkers(detect, marker_corners, marker_ids);
 
@@ -64,34 +64,31 @@ int main(int argc, char **argv) try {
             cv::circle(detect, cv::Point(marker_x, marker_y), 5, cv::Scalar(0, 200, 0), -1, -1);
             }
             double depth = dep.get_distance(marker_x, marker_y);
-            cout << "[" << marker_x << ", " << marker_y << ", " << depth << "]" << endl;
         }else {
             cout << "can`t detect markers!" << endl;
         }
+        cv::imshow("detector", detect);
+
 
 
         //sense objects
-        senser = image;
         double depth;
         for(int cell_x = PAUL_L; cell_x <= PAUL_R; cell_x += 2) {
             for(int cell_y = AREA_H; cell_y <= AREA_L; cell_y += 2) {
                 double depth = dep.get_distance(cell_x, cell_y);
                 if(depth < DEPTH_MAX && depth > DEPTH_MIN) {
-                    cv::circle(senser, cv::Point(cell_x, cell_y), 1, cv::Scalar(255, 255, 255), -1);
+                    cv::circle(image, cv::Point(cell_x, cell_y), 1, cv::Scalar(255, 255, 255), -1);
                 }
             }
         }
-        cv::cvtColor(senser, gray, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
         cv::threshold(gray, mono, 254, 255, cv::THRESH_BINARY);
+        dilate(mono, sense, cv::Mat(), cv::Point(-1, -1), 1);
+        erode(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
+        erode(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
+        dilate(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
 
-        dilate(mono, senser, cv::Mat(), cv::Point(-1, -1), 1);
-        erode(senser, senser, cv::Mat(), cv::Point(-1, -1), 1);
-        erode(senser, senser, cv::Mat(), cv::Point(-1, -1), 1);
-        dilate(senser, senser, cv::Mat(), cv::Point(-1, -1), 1);
-
-
-        cv::imshow("detect", detect);
-        cv::imshow("senser", senser);
+        cv::imshow("senser", sense);
 
         if(cv::waitKey(1) == 'q') {
             cout << "finish!!" << endl;
@@ -100,11 +97,3 @@ int main(int argc, char **argv) try {
     }
 }
 
-catch (const rs2::error &e) {
-    cerr << "Realsense error calling" << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    " << e.what() << std::endl;
-    return EXIT_FAILURE;
-}
-catch (const std::exception &e) {
-    cerr << e.what() << endl;
-    return EXIT_FAILURE;
-}

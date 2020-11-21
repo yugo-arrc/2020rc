@@ -41,10 +41,9 @@ int main(int argc, char **argv) try {
         auto depth_map = aligned_frames.get_depth_frame();
         auto color_map = aligned_frames.get_color_frame();
         rs2::depth_frame dep = aligned_frames.get_depth_frame();
-        cv::Mat detect (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)co$
-        cv::Mat image (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)col$
+        cv::Mat detect (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
+        cv::Mat image (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
         cv::Mat sense, gray, mono;
-
 
         //detect markers
         cv::aruco::detectMarkers(detect, dictionary, marker_corners, marker_ids,  parameters);
@@ -90,6 +89,10 @@ int main(int argc, char **argv) try {
 
         cv::imshow("senser", sense);
 
+        //labeling
+        cv::Mat labeling, stats, centroids;
+        int nLab = cv::connectedComponentsWithStats(sense, labeling, stats, centroids);
+
         if(cv::waitKey(1) == 'q') {
             cout << "finish!!" << endl;
             break;
@@ -97,3 +100,11 @@ int main(int argc, char **argv) try {
     }
 }
 
+catch (const rs2::error &e) {
+    cerr << "Realsense error calling" << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    " << e.what() << std::endl;
+    return EXIT_FAILURE;
+}
+catch (const std::exception &e) {
+    cerr << e.what() << endl;
+    return EXIT_FAILURE;
+}

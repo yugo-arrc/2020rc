@@ -3,7 +3,7 @@
 #include<opencv2/aruco.hpp>
 #include<librealsense2/rs.hpp>
 #include<librealsense2/rsutil.h>
-//using namespace std;
+using namespace std;
 
 constexpr size_t WIDTH = 640;
 constexpr size_t HEIGHT = 360;

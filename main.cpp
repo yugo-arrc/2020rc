@@ -92,6 +92,43 @@ int main(int argc, char **argv) try {
         //labeling
         cv::Mat labeling, stats, centroids;
         int nLab = cv::connectedComponentsWithStats(sense, labeling, stats, centroids);
+        //重心計算
+        int centerX[nLab];
+        int centerY[nLab];
+        for (int i = 1; i < nLab; ++i)
+        {
+            double *param = centroids.ptr<double>(i);
+            centerX[i] = static_cast<int>(param[0]);
+            centerY[i] = static_cast<int>(param[1]);
+        }
+
+        int area_num = 0;
+        static int prev_area_num;
+            //座標
+        for (int i = 1; i < nLab; ++i)
+        {
+            int *param = stats.ptr<int>(i);
+            if (param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500 && param[cv::ConnectedComponentsTypes::CC_STAT_LEFT] <= 800)
+            {
+                area_num++;
+                cv::circle(color, cv::Point(centerX[i], centerY[i]), 3, cv::Scalar(0, 0, 255), -1);
+                int x = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT];
+                int y = param[cv::ConnectedComponentsTypes::CC_STAT_TOP];
+                int height = param[cv::ConnectedComponentsTypes::CC_STAT_HEIGHT];
+                int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH];
+                cv::rectangle(color, cv::Rect(x, y, width, height), cv::Scalar(0, 255, 0), 2);
+                std::stringstream num;
+                num << area_num;
+                putText(color, num.str(), cv::Point(x + 5, y + 20), cv::FONT_HERSHEY_COMPLEX, 0.7, cv::Scalar(0, 255, 255), 2);
+            }
+        }
+
+        if(area_num > prev_area_num){
+            system("play alart.wav&");
+        }
+        prev_area_num = area_num;
+
+
 
         if(cv::waitKey(1) == 'q') {
             cout << "finish!!" << endl;

@@ -41,11 +41,9 @@ int main(int argc, char **argv) try {
         auto depth_map = aligned_frames.get_depth_frame();
         auto color_map = aligned_frames.get_color_frame();
         rs2::depth_frame dep = aligned_frames.get_depth_frame();
-        cv::Mat detect (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
-        cv::Mat image (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
-        cv::Mat sense, gray, mono;
 
         //detect markers
+        cv::Mat detect (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
         cv::aruco::detectMarkers(detect, dictionary, marker_corners, marker_ids,  parameters);
         cv::aruco::drawDetectedMarkers(detect, marker_corners, marker_ids);
 
@@ -62,73 +60,65 @@ int main(int argc, char **argv) try {
 
             cv::circle(detect, cv::Point(marker_x, marker_y), 5, cv::Scalar(0, 200, 0), -1, -1);
             }
-            double depth = dep.get_distance(marker_x, marker_y);
-        }else {
-            cout << "can`t detect markers!" << endl;
+            double marker_depth = dep.get_distance(marker_x, marker_y);
         }
-        cv::imshow("detector", detect);
 
 
 
         //sense objects
         double depth;
+        cv::Mat sense = cv::Mat::zeros(detect.size(), CV_8UC3);
+        cv::Mat gray, mono;
+
         for(int cell_x = PAUL_L; cell_x <= PAUL_R; cell_x += 2) {
             for(int cell_y = AREA_H; cell_y <= AREA_L; cell_y += 2) {
                 double depth = dep.get_distance(cell_x, cell_y);
                 if(depth < DEPTH_MAX && depth > DEPTH_MIN) {
-                    cv::circle(image, cv::Point(cell_x, cell_y), 1, cv::Scalar(255, 255, 255), -1);
+                    cv::circle(sense, cv::Point(cell_x, cell_y), 1, cv::Scalar(255, 255, 255), -1);
                 }
             }
         }
-        cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(sense, gray, cv::COLOR_BGR2GRAY);
         cv::threshold(gray, mono, 254, 255, cv::THRESH_BINARY);
         dilate(mono, sense, cv::Mat(), cv::Point(-1, -1), 1);
         erode(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
         erode(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
         dilate(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
 
-        cv::imshow("senser", sense);
-
         //labeling
-        cv::Mat labeling, stats, centroids;
-        int nLab = cv::connectedComponentsWithStats(sense, labeling, stats, centroids);
+        cv::Mat label = cv::Mat::zeros(detect.size(),CV_8UC3);
+        cv::Mat labeling, stats, centroids, mlab;
+        int nlab = cv::connectedComponentsWithStats(sense, labeling, stats, centroids);
+
         //重心計算
-        int centerX[nLab];
-        int centerY[nLab];
-        for (int i = 1; i < nLab; ++i)
-        {
+        int centerX[nlab];
+        int centerY[nlab];
+        for (int i = 1; i < nlab; ++i) {
             double *param = centroids.ptr<double>(i);
             centerX[i] = static_cast<int>(param[0]);
             centerY[i] = static_cast<int>(param[1]);
         }
 
         int area_num = 0;
-        static int prev_area_num;
-            //座標
-        for (int i = 1; i < nLab; ++i)
-        {
+        //座標
+        for (int i = 1; i < nlab; ++i) {
             int *param = stats.ptr<int>(i);
-            if (param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500 && param[cv::ConnectedComponentsTypes::CC_STAT_LEFT] <= 800)
-            {
+            if (param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500) {
                 area_num++;
-                cv::circle(color, cv::Point(centerX[i], centerY[i]), 3, cv::Scalar(0, 0, 255), -1);
+                cv::circle(label, cv::Point(centerX[i], centerY[i]), 3, cv::Scalar(0, 0, 255), -1);
                 int x = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT];
                 int y = param[cv::ConnectedComponentsTypes::CC_STAT_TOP];
                 int height = param[cv::ConnectedComponentsTypes::CC_STAT_HEIGHT];
                 int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH];
-                cv::rectangle(color, cv::Rect(x, y, width, height), cv::Scalar(0, 255, 0), 2);
+                cv::rectangle(label, cv::Rect(x, y, width, height), cv::Scalar(0, 255, 0), 2);
                 std::stringstream num;
                 num << area_num;
-                putText(color, num.str(), cv::Point(x + 5, y + 20), cv::FONT_HERSHEY_COMPLEX, 0.7, cv::Scalar(0, 255, 255), 2);
+                putText(label, num.str(), cv::Point(x + 5, y + 20), cv::FONT_HERSHEY_COMPLEX, 0.7, cv::Scalar(0, 255, 255), 2);
             }
         }
 
-        if(area_num > prev_area_num){
-            system("play alart.wav&");
-        }
-        prev_area_num = area_num;
-
-
+        cv::imshow("detecter", detect);
+        cv::imshow("labeling", label);
 
         if(cv::waitKey(1) == 'q') {
             cout << "finish!!" << endl;

@@ -44,6 +44,7 @@ int main(int argc, char **argv) try {
 
         //detect markers
         cv::Mat detect (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
+        cv::Mat label = detect.clone();
         cv::aruco::detectMarkers(detect, dictionary, marker_corners, marker_ids,  parameters);
         cv::aruco::drawDetectedMarkers(detect, marker_corners, marker_ids);
 
@@ -88,7 +89,6 @@ int main(int argc, char **argv) try {
         dilate(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
 
         //labeling
-         cv::Mat label (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
         cv::Mat labeling, stats, centroids, mlab;
         int nlab = cv::connectedComponentsWithStats(sense, labeling, stats, centroids);
 

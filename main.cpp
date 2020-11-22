@@ -32,7 +32,7 @@ int main(int argc, char **argv) try {
     vector<std::vector<cv::Point2f>> marker_corners;
     cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
 
-    double marker_x, marker_y;
+    double marker_x, marker_y, danger;
 
     while(1) {
         rs2::frameset frames = pipe.wait_for_frames();
@@ -121,6 +121,28 @@ int main(int argc, char **argv) try {
 
         cv::imshow("detecter", detect);
         cv::imshow("labeling", label);
+
+
+
+        //sent date
+        area_num = 0;
+        danger = 0;
+        for (int i = 1; i < nlab; ++i) {
+            int *param = stats.ptr<int>(i);
+            if (param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500) {
+                area_num++;
+                int x_L = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT];
+                int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH];
+                int x_R = x_L + width;
+
+                for(int i = x_L; i < x_R; i++) {
+                    if(i == marker_x) {
+                        danger++;
+                    }
+                }
+            }
+        }
+
 
         if(cv::waitKey(1) == 'q') {
             cout << "finish!!" << endl;

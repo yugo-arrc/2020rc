@@ -63,6 +63,8 @@ int main(int argc, char **argv) try {
             double marker_depth = dep.get_distance(marker_x, marker_y);
         }
 
+        cv::imshow("detecter", detect);
+
 
 
         //sense objects
@@ -86,7 +88,7 @@ int main(int argc, char **argv) try {
         dilate(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
 
         //labeling
-        cv::Mat label = cv::Mat::zeros(detect.size(),CV_8UC3);
+         cv::Mat label (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
         cv::Mat labeling, stats, centroids, mlab;
         int nlab = cv::connectedComponentsWithStats(sense, labeling, stats, centroids);
 
@@ -117,7 +119,6 @@ int main(int argc, char **argv) try {
             }
         }
 
-        cv::imshow("detecter", detect);
         cv::imshow("labeling", label);
 
         if(cv::waitKey(1) == 'q') {

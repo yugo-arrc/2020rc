@@ -42,9 +42,14 @@ int main(int argc, char **argv) try {
         auto color_map = aligned_frames.get_color_frame();
         rs2::depth_frame dep = aligned_frames.get_depth_frame();
 
-        //detect markers
         cv::Mat detect (cv::Size(color_map.get_width(), color_map.get_height()), CV_8UC3, (void *)color_map.get_data(), cv::Mat::AUTO_STEP);
         cv::Mat label = detect.clone();
+        cv::Mat sense = cv::Mat::zeros(detect.size(), CV_8UC3);
+        cv::Mat gray, mono, labeling, stats, centroids;
+
+
+
+        //detect markers
         cv::aruco::detectMarkers(detect, dictionary, marker_corners, marker_ids,  parameters);
         cv::aruco::drawDetectedMarkers(detect, marker_corners, marker_ids);
 
@@ -64,15 +69,9 @@ int main(int argc, char **argv) try {
             double marker_depth = dep.get_distance(marker_x, marker_y);
         }
 
-        cv::imshow("detecter", detect);
-
 
 
         //sense objects
-        double depth;
-        cv::Mat sense = cv::Mat::zeros(detect.size(), CV_8UC3);
-        cv::Mat gray, mono;
-
         for(int cell_x = PAUL_L; cell_x <= PAUL_R; cell_x += 2) {
             for(int cell_y = AREA_H; cell_y <= AREA_L; cell_y += 2) {
                 double depth = dep.get_distance(cell_x, cell_y);
@@ -89,7 +88,6 @@ int main(int argc, char **argv) try {
         dilate(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
 
         //labeling
-        cv::Mat labeling, stats, centroids, mlab;
         int nlab = cv::connectedComponentsWithStats(sense, labeling, stats, centroids);
 
         //重心計算
@@ -119,6 +117,9 @@ int main(int argc, char **argv) try {
             }
         }
 
+
+
+        cv::imshow("detecter", detect);
         cv::imshow("labeling", label);
 
         if(cv::waitKey(1) == 'q') {

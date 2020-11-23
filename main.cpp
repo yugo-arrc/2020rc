@@ -1,9 +1,13 @@
-#include<iostream>
-#include<opencv2/aruco.hpp>
-#include<opencv2/opencv.hpp>
-#include<librealsense2/rs.hpp>
-#include<librealsense2/rsutil.h>
+#include <iostream>
+#include <opencv2/aruco.hpp>
+#include <opencv2/opencv.hpp>
+#include <librealsense2/rs.hpp>
+#include <librealsense2/rsutil.h>
+#include "TCP/tcpSend.h"
 using namespace std;
+using namespace ARRC;
+
+TCP tcp("172.16.84.224");
 
 constexpr size_t WIDTH = 640;
 constexpr size_t HEIGHT = 360;
@@ -126,6 +130,7 @@ int main(int argc, char **argv) try {
 
         //sent date
         area_num = 0;
+        int send_data = 0;
         danger = 0;
         for (int i = 1; i < nlab; ++i) {
             int *param = stats.ptr<int>(i);
@@ -135,13 +140,14 @@ int main(int argc, char **argv) try {
                 int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH];
                 int x_R = x_L + width;
 
-                for(int i = x_L; i < x_R; i++) {
+                for(int i = x_L; i <= x_R; i++) {
                     if(i == marker_x) {
-                        danger++;
+                        send_data = danger++;
                     }
                 }
             }
         }
+        tcp.send(send_data);
 
 
         if(cv::waitKey(1) == 'q') {

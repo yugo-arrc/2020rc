@@ -11,12 +11,12 @@ TCP tcp("172.16.84.224");
 
 constexpr size_t WIDTH = 640;
 constexpr size_t HEIGHT = 360;
-constexpr double PAUL_L = 100;
-constexpr double PAUL_R = 540;
+constexpr double PAUL_L = 90;
+constexpr double PAUL_R = 550;
 constexpr double AREA_H = 100;
-constexpr double AREA_L = 200;
-constexpr double DEPTH_MAX = 3;
-constexpr double DEPTH_MIN = 2;
+constexpr double AREA_L = 150;
+constexpr double DEPTH_MAX = 3.3;
+constexpr double DEPTH_MIN = 2.5;
 
 int main(int argc, char **argv) try {
     rs2::colorizer color_map;
@@ -72,6 +72,10 @@ int main(int argc, char **argv) try {
             }
             double marker_depth = dep.get_distance(marker_x, marker_y);
         }
+        int width = PAUL_R - PAUL_L;
+        int height = AREA_L - AREA_H;
+        cv::rectangle(detect, cv::Rect(PAUL_L, AREA_H, width, height), cv::Scalar(255, 255, 255), 2);
+        //cv::rectangle(detect, cv::Rect(80, 50, 480, 100), cv::Scalar(0, 255, 0), 2);
 
 
 
@@ -147,7 +151,8 @@ int main(int argc, char **argv) try {
                 }
             }
         }
-        tcp.send(send_data);
+        //tcp.send(send_data);
+        cout << danger << endl;
 
 
         if(cv::waitKey(1) == 'q') {

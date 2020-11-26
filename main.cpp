@@ -7,16 +7,15 @@
 using namespace std;
 using namespace ARRC;
 
-TCP tcp("172.16.84.224");
-
+TCP tcp("172.16.86.164");
 constexpr size_t WIDTH = 640;
 constexpr size_t HEIGHT = 360;
 constexpr double PAUL_L = 100;
 constexpr double PAUL_R = 540;
 constexpr double AREA_H = 120;
 constexpr double AREA_L = 170;
-constexpr double DEPTH_MAX = 3.2;
-constexpr double DEPTH_MIN = 2.4;
+constexpr double DEPTH_MAX = 3.1;
+constexpr double DEPTH_MIN = 2.3;
 
 int main(int argc, char **argv) try {
     rs2::colorizer color_map;

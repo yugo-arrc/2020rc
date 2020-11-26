@@ -36,7 +36,7 @@ int main(int argc, char **argv) try {
     vector<std::vector<cv::Point2f>> marker_corners;
     cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
 
-    double marker_x, marker_y, danger;
+    double marker_x, marker_y, danger, send_data;
 
     while(1) {
         rs2::frameset frames = pipe.wait_for_frames();
@@ -133,7 +133,7 @@ int main(int argc, char **argv) try {
 
         //sent date
         area_num = 0;
-        int send_data = 0;
+        send_data = 0;
         danger = 0;
         for (int i = 1; i < nlab; ++i) {
             int *param = stats.ptr<int>(i);

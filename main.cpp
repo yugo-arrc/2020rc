@@ -11,12 +11,12 @@ TCP tcp("172.16.84.224");
 
 constexpr size_t WIDTH = 640;
 constexpr size_t HEIGHT = 360;
-constexpr double PAUL_L = 90;
-constexpr double PAUL_R = 550;
-constexpr double AREA_H = 100;
-constexpr double AREA_L = 150;
-constexpr double DEPTH_MAX = 3.3;
-constexpr double DEPTH_MIN = 2.5;
+constexpr double PAUL_L = 100;
+constexpr double PAUL_R = 540;
+constexpr double AREA_H = 120;
+constexpr double AREA_L = 170;
+constexpr double DEPTH_MAX = 3.2;
+constexpr double DEPTH_MIN = 2.4;
 
 int main(int argc, char **argv) try {
     rs2::colorizer color_map;
@@ -75,7 +75,6 @@ int main(int argc, char **argv) try {
         int width = PAUL_R - PAUL_L;
         int height = AREA_L - AREA_H;
         cv::rectangle(detect, cv::Rect(PAUL_L, AREA_H, width, height), cv::Scalar(255, 255, 255), 2);
-        //cv::rectangle(detect, cv::Rect(80, 50, 480, 100), cv::Scalar(0, 255, 0), 2);
 
 
 
@@ -140,8 +139,8 @@ int main(int argc, char **argv) try {
             int *param = stats.ptr<int>(i);
             if (param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500) {
                 area_num++;
-                int x_L = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT] - 10;
-                int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH] + 10;
+                int x_L = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT] - 20;
+                int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH] + 20;
                 int x_R = x_L + width;
 
                 for(int i = x_L; i <= x_R; i++) {
@@ -151,8 +150,8 @@ int main(int argc, char **argv) try {
                 }
             }
         }
-        //tcp.send(send_data);
-        cout << danger << endl;
+        tcp.send(send_data);
+        //cout << danger << endl;
 
 
         if(cv::waitKey(1) == 'q') {

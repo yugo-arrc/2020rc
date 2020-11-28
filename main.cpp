@@ -7,15 +7,20 @@
 using namespace std;
 using namespace ARRC;
 
-TCP tcp("172.16.86.164");
+TCP tcp("172.16.85.192");
+
 constexpr size_t WIDTH = 640;
 constexpr size_t HEIGHT = 360;
-constexpr double PAUL_L = 100;
-constexpr double PAUL_R = 540;
+constexpr double PAUL_L = 80;
+constexpr double PAUL_R = 560;
 constexpr double AREA_H = 120;
 constexpr double AREA_L = 170;
-constexpr double DEPTH_MAX = 3.1;
-constexpr double DEPTH_MIN = 2.3;
+constexpr double PAUL_DEPTH = 2.55;
+constexpr double DEPTH_MAX = PAUL_DEPTH + 0.3;
+constexpr double DEPTH_MIN = PAUL_DEPTH - 0.3;
+constexpr double strap[6] = {142, 212, 285, 355, 425, 495};
+constexpr double l_strap = 142;
+constexpr double r_strap = 495;
 
 int main(int argc, char **argv) try {
     rs2::colorizer color_map;
@@ -35,8 +40,7 @@ int main(int argc, char **argv) try {
     vector<std::vector<cv::Point2f>> marker_corners;
     cv::Ptr<cv::aruco::DetectorParameters> parameters = cv::aruco::DetectorParameters::create();
 
-    double marker_x, marker_y, danger, send_data;
-
+    double marker_x, marker_y, danger, s_count, send_data;
     while(1) {
         rs2::frameset frames = pipe.wait_for_frames();
         rs2::align align_to_color(RS2_STREAM_COLOR);
@@ -55,7 +59,6 @@ int main(int argc, char **argv) try {
         //detect markers
         cv::aruco::detectMarkers(detect, dictionary, marker_corners, marker_ids,  parameters);
         cv::aruco::drawDetectedMarkers(detect, marker_corners, marker_ids);
-
         if(marker_ids.size() > 0) {
             for(int i = 0; i < marker_ids.size() ;i++) {
                 marker_x = 0;
@@ -66,7 +69,6 @@ int main(int argc, char **argv) try {
                 }
             marker_x /= 4;
             marker_y /= 4;
-
             cv::circle(detect, cv::Point(marker_x, marker_y), 5, cv::Scalar(0, 200, 0), -1, -1);
             }
             double marker_depth = dep.get_distance(marker_x, marker_y);
@@ -74,6 +76,10 @@ int main(int argc, char **argv) try {
         int width = PAUL_R - PAUL_L;
         int height = AREA_L - AREA_H;
         cv::rectangle(detect, cv::Rect(PAUL_L, AREA_H, width, height), cv::Scalar(255, 255, 255), 2);
+        for(int i = 0; i < 6; i++) {
+            cv::line(detect, cv::Point(strap[i], 1), cv::Point(strap[i], 359), (255, 255, 0), 1);
+        }
+        cv::circle(detect, cv::Point(marker_x + 17, marker_y), 5, cv::Scalar(155, 200, 0), -1, -1);
 
 
 
@@ -88,18 +94,20 @@ int main(int argc, char **argv) try {
         }
         cv::cvtColor(sense, gray, cv::COLOR_BGR2GRAY);
         cv::threshold(gray, mono, 254, 255, cv::THRESH_BINARY);
+        cv::imshow("a", mono);
         dilate(mono, sense, cv::Mat(), cv::Point(-1, -1), 1);
         erode(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
         erode(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
         dilate(sense, sense, cv::Mat(), cv::Point(-1, -1), 1);
 
+
+
         //labeling
         int nlab = cv::connectedComponentsWithStats(sense, labeling, stats, centroids);
-
         //重心計算
         int centerX[nlab];
         int centerY[nlab];
-        for (int i = 1; i < nlab; ++i) {
+        for(int i = 1; i < nlab; ++i) {
             double *param = centroids.ptr<double>(i);
             centerX[i] = static_cast<int>(param[0]);
             centerY[i] = static_cast<int>(param[1]);
@@ -107,9 +115,9 @@ int main(int argc, char **argv) try {
 
         int area_num = 0;
         //座標
-        for (int i = 1; i < nlab; ++i) {
+        for(int i = 1; i < nlab; ++i) {
             int *param = stats.ptr<int>(i);
-            if (param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500) {
+            if(param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500) {
                 area_num++;
                 cv::circle(label, cv::Point(centerX[i], centerY[i]), 3, cv::Scalar(0, 0, 255), -1);
                 int x = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT];
@@ -124,33 +132,30 @@ int main(int argc, char **argv) try {
         }
 
 
-
         cv::imshow("detecter", detect);
         cv::imshow("labeling", label);
 
 
-
-        //sent date
-        area_num = 0;
+        //sent data
         send_data = 0;
         danger = 0;
-        for (int i = 1; i < nlab; ++i) {
+        for(int i = 1; i < nlab; ++i) {
             int *param = stats.ptr<int>(i);
-            if (param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500) {
-                area_num++;
-                int x_L = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT] - 20;
-                int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH] + 20;
+            if(param[cv::ConnectedComponentsTypes::CC_STAT_AREA] > 500) {
+                int x_L = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT];
+                int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH];
                 int x_R = x_L + width;
-
                 for(int i = x_L; i <= x_R; i++) {
-                    if(i == marker_x) {
+                    if(i == marker_x + 17) {
                         send_data = danger++;
                     }
                 }
             }
         }
-        tcp.send(send_data);
-        //cout << danger << endl;
+
+        //tcp.send(send_data);
+        cout << danger << endl;
+
 
 
         if(cv::waitKey(1) == 'q') {
@@ -159,7 +164,6 @@ int main(int argc, char **argv) try {
         }
     }
 }
-
 catch (const rs2::error &e) {
     cerr << "Realsense error calling" << e.get_failed_function() << "(" << e.get_failed_args() << "):\n    " << e.what() << std::endl;
     return EXIT_FAILURE;

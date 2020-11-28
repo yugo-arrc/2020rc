@@ -19,8 +19,8 @@ constexpr double PAUL_DEPTH = 2.55;
 constexpr double DEPTH_MAX = PAUL_DEPTH + 0.5;
 constexpr double DEPTH_MIN = PAUL_DEPTH - 0.5;
 constexpr double strap[6] = {142, 212, 285, 355, 425, 495};
-constexpr double l_strap = 142;
-constexpr double r_strap = 495;
+constexpr double l_strap = 20;//142
+constexpr double r_strap = 660;//495
 
 int main(int argc, char **argv) try {
     rs2::colorizer color_map;
@@ -79,6 +79,8 @@ int main(int argc, char **argv) try {
         for(int i = 0; i < 6; i++) {
             cv::line(detect, cv::Point(strap[i], 1), cv::Point(strap[i], 359), (255, 255, 0), 1);
         }
+        cv::line(detect, cv::Point(115, 1), cv::Point(115, 359), (255, 255, 0), 2);
+        cv::line(detect, cv::Point(508, 1), cv::Point(508, 359), (255, 255, 0), 2);
         cv::circle(detect, cv::Point(marker_x + 17, marker_y), 5, cv::Scalar(155, 200, 0), -1, -1);
 
 
@@ -150,13 +152,17 @@ int main(int argc, char **argv) try {
                         send_data = danger++;
                     }
                 }*/
-
                 if(marker_x + 17 <= x_R && marker_x + 17 >= x_L) {
                     send_data = 1;
                     std::cout <<" into" << std::endl;
                 }
             }
         }
+
+        if(marker_x + 17 > 495 || marker_x + 17 < 120){
+            send_data = 2;
+        }
+
 
         tcp.send(send_data);
         cout << send_data << endl;

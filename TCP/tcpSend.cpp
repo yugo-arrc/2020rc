@@ -20,7 +20,7 @@ namespace ARRC{
             return false;
         }else{
             recv(sockfd, buf, sizeof(buf), 0);
-            std::cout << buf << std::endl;
+            //std::cout << buf << std::endl;
         }
         return true;
     }

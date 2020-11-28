@@ -145,16 +145,21 @@ int main(int argc, char **argv) try {
                 int x_L = param[cv::ConnectedComponentsTypes::CC_STAT_LEFT];
                 int width = param[cv::ConnectedComponentsTypes::CC_STAT_WIDTH];
                 int x_R = x_L + width;
-                for(int i = x_L; i <= x_R; i++) {
+                /*for(int i = x_L; i <= x_R; i++) {
                     if(i == marker_x + 17) {
                         send_data = danger++;
                     }
+                }*/
+
+                if(marker_x + 17 <= x_R + 15 && marker_x + 17 >= x_L - 15) {
+                    send_data = 1;
+                    std::cout <<" into" << std::endl;
                 }
             }
         }
 
-        //tcp.send(send_data);
-        cout << danger << endl;
+        tcp.send(send_data);
+        cout << send_data << endl;
 
 
 

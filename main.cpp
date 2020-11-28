@@ -16,8 +16,8 @@ constexpr double PAUL_R = 560;
 constexpr double AREA_H = 120;
 constexpr double AREA_L = 170;
 constexpr double PAUL_DEPTH = 2.55;
-constexpr double DEPTH_MAX = PAUL_DEPTH + 0.3;
-constexpr double DEPTH_MIN = PAUL_DEPTH - 0.3;
+constexpr double DEPTH_MAX = PAUL_DEPTH + 0.5;
+constexpr double DEPTH_MIN = PAUL_DEPTH - 0.5;
 constexpr double strap[6] = {142, 212, 285, 355, 425, 495};
 constexpr double l_strap = 142;
 constexpr double r_strap = 495;
@@ -151,7 +151,7 @@ int main(int argc, char **argv) try {
                     }
                 }*/
 
-                if(marker_x + 17 <= x_R + 15 && marker_x + 17 >= x_L - 15) {
+                if(marker_x + 17 <= x_R && marker_x + 17 >= x_L) {
                     send_data = 1;
                     std::cout <<" into" << std::endl;
                 }
